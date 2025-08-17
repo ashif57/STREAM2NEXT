@@ -48,6 +48,7 @@ const steps: { [key in Exclude<Status, 'idle' | 'error'>]: { text: string; icon:
 
 export function StreamNextConverter() {
   const [selectedRepo, setSelectedRepo] = useState('');
+  const [sourceFramework, setSourceFramework] = useState<'streamlit'>('streamlit'); // Default to Streamlit
   const [targetFramework, setTargetFramework] = useState<'nextjs' | 'react-fastapi'>('nextjs');
   const [status, setStatus] = useState<Status>('idle');
   const [progress, setProgress] = useState(0);
@@ -85,6 +86,10 @@ export function StreamNextConverter() {
   }, []);
 
   const isConverting = useMemo(() => status !== 'idle' && status !== 'completed' && status !== 'error', [status]);
+
+  const handleSourceFrameworkChange = (value: string) => {
+    setSourceFramework(value as 'streamlit');
+  };
 
   const handleTargetFrameworkChange = (value: string) => {
     setTargetFramework(value as 'nextjs' | 'react-fastapi');
@@ -158,7 +163,7 @@ export function StreamNextConverter() {
           Repository Conversion
         </CardTitle>
         <CardDescription>
-          Select one of your Streamlit repositories and a target framework for conversion.
+          Select the source and target frameworks for conversion.
         </CardDescription>
       </CardHeader>
       <CardContent className="min-h-[14rem] flex flex-col justify-center">
@@ -195,17 +200,34 @@ export function StreamNextConverter() {
                           ))}
                       </SelectContent>
                   </Select>
-                  <RadioGroup defaultValue="nextjs" onValueChange={handleTargetFrameworkChange} className="flex space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="nextjs" id="nextjs" />
-                      <Label htmlFor="nextjs">Next.js</Label>
+
+                  <div className="flex space-x-4">
+                    <div className="flex-1">
+                      <Label htmlFor="from-framework">From</Label>
+                      <Select onValueChange={handleSourceFrameworkChange} value={sourceFramework} disabled>
+                        <SelectTrigger id="from-framework">
+                          <SelectValue placeholder="Select source framework" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="streamlit">Streamlit</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="react-fastapi" id="react-fastapi" />
-                      <Label htmlFor="react-fastapi">React + FastAPI</Label>
+                    <div className="flex-1">
+                      <Label htmlFor="to-framework">To</Label>
+                      <Select onValueChange={handleTargetFrameworkChange} value={targetFramework}>
+                        <SelectTrigger id="to-framework">
+                          <SelectValue placeholder="Select target framework" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="nextjs">Next.js</SelectItem>
+                          <SelectItem value="react-fastapi">React + FastAPI</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </RadioGroup>
-                  <Button size="lg" className="w-full bg-primary hover:bg-primary/90" onClick={handleConvert} disabled={!selectedRepo || !targetFramework || isConverting}>
+                  </div>
+
+                  <Button size="lg" className="w-full bg-primary hover:bg-primary/90" onClick={handleConvert} disabled={!selectedRepo || !sourceFramework || !targetFramework || isConverting}>
                       <Zap className="mr-2 h-5 w-5" />
                       Convert
                   </Button>

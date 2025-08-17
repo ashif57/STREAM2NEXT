@@ -106,9 +106,12 @@ export async function POST(req: NextRequest) {
   const octokit = new Octokit({ auth: accessToken });
 
   try {
-    const {repoId, targetFramework} = await req.json();
+    const {repoId, sourceFramework, targetFramework} = await req.json();
     if (!repoId) {
       return NextResponse.json({error: 'Repository ID is required.'}, {status: 400});
+    }
+    if (!sourceFramework) {
+      return NextResponse.json({error: 'Source framework is required.'}, {status: 400});
     }
     if (!targetFramework) {
       return NextResponse.json({error: 'Target framework is required.'}, {status: 400});
@@ -136,10 +139,10 @@ export async function POST(req: NextRequest) {
     let commitMessage: string = ''; // Initialize to prevent TS error
     let branchUrl: string = ''; // Initialize to prevent TS error
 
-    if (targetFramework === 'nextjs') {
+    if (sourceFramework === 'streamlit' && targetFramework === 'nextjs') {
       const [{ nextjsCode }, { packageJsonContent }] = await Promise.all([
           streamlitToNextJS({ streamlitCode }),
-          requirementsContent 
+          requirementsContent
               ? generateDependencyList({ requirementsFileContent: requirementsContent })
               // Provide a default package.json if requirements.txt is missing
               : Promise.resolve({ packageJsonContent: '{\n  "name": "converted-app",\n  "version": "0.1.0",\n  "private": true,\n  "scripts": {\n    "dev": "next dev",\n    "build": "next build",\n    "start": "next start",\n    "lint": "next lint"\n  },\n  "dependencies": {\n    "react": "^18",\n    "react-dom": "^18",\n    "next": "14.2.3"\n  },\n  "devDependencies": {\n    "typescript": "^5",\n    "@types/node": "^20",\n    "@types/react": "^18",\n    "@types/react-dom": "^18",\n    "postcss": "^8",\n    "tailwindcss": "^3.4.1",\n    "eslint": "^8",\n    "eslint-config-next": "14.2.3"\n  }\n}\n' })
@@ -168,7 +171,7 @@ export async function POST(req: NextRequest) {
           { path: 'tsconfig.json', content: `{\n "compilerOptions": {\n   "lib": ["dom", "dom.iterable", "esnext"],\n   "allowJs": true,\n   "skipLibCheck": true,\n   "strict": true,\n   "noEmit": true,\n   "esModuleInterop": true,\n   "module": "esnext",\n   "moduleResolution": "bundler",\n   "resolveJsonModule": true,\n   "isolatedModules": true,\n   "jsx": "preserve",\n   "incremental": true,\n   "plugins": [\n     {\n       "name": "next"\n     }\n   ],\n   "paths": {\n     "@/*": ["./src/*"]\n   }\n },\n "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],\n "exclude": ["node_modules"]\n}\n` },
           { path: 'next.config.js', content: `/** @type {import('next').NextConfig} */\nconst nextConfig = {\n   // Your Next.js configuration options here\n};\n\nmodule.exports = nextConfig;\n` },
       ];
-    } else if (targetFramework === 'react-fastapi') {
+    } else if (sourceFramework === 'streamlit' && targetFramework === 'react-fastapi') {
       const [{ reactComponentCode, fastApiServerCode, reactPackageJson, fastApiRequirementsTxt }] = await Promise.all([
           streamlitToReactFastAPI({ streamlitCode, requirementsTxt: requirementsContent }),
       ]);
@@ -190,7 +193,7 @@ export async function POST(req: NextRequest) {
           { path: 'frontend/tsconfig.json', content: `{\n  "compilerOptions": {\n    "target": "es5",\n    "lib": [\n      "dom",\n      "dom.iterable",\n      "esnext"\n    ],\n    "allowJs": true,\n    "skipLibCheck": true,\n    "esModuleInterop": true,\n    "allowSyntheticDefaultImports": true,\n    "strict": true,\n    "forceConsistentCasingInFileNames": true,\n    "noFallthroughCasesInSwitch": true,\n    "module": "esnext",\n    "moduleResolution": "node",\n    "resolveJsonModule": true,\n    "isolatedModules": true,\n    "noEmit": true,\n    "jsx": "react-jsx"\n  },\n  "include": [\n    "src"\n  ]\n}\n`},
       ];
     } else {
-      return NextResponse.json({error: 'Invalid target framework.'}, {status: 400});
+      return NextResponse.json({error: `Invalid conversion pair: ${sourceFramework} to ${targetFramework}.`}, {status: 400});
     }
 
     // Create a new branch
