@@ -8,7 +8,7 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 // Explicitly define the callback URL to ensure it's consistent.
-const GITHUB_REDIRECT_URI = 'http://localhost:9002/api/auth/github/callback';
+const GITHUB_REDIRECT_URI = 'https://stream-2-next.vercel.app/api/auth/github/callback';
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
