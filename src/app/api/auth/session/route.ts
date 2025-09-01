@@ -24,7 +24,7 @@ const clientApp =
 const clientAuth = getClientAuth(clientApp);
 
 export async function GET() {
-  const customToken = cookies().get('customToken')?.value;
+  const customToken = (await cookies()).get('customToken')?.value;
 
   if (!customToken) {
     return new Response(JSON.stringify({user: null}), {
@@ -52,11 +52,9 @@ export async function GET() {
     return NextResponse.json({user: responseUser});
   } catch (error: any) {
     if (error.code === 'auth/id-token-expired') {
-        cookies().delete('customToken');
-        return new Response(JSON.stringify({user: null, error: 'Session expired' }), {
-            status: 401,
-            headers: {'Content-Type': 'application/json'},
-        });
+        const response = NextResponse.json({user: null, error: 'Session expired' }, { status: 401 });
+        response.cookies.delete('customToken');
+        return response;
     }
     console.error('Session error:', error);
     return new Response(JSON.stringify({user: null, error: 'Invalid session' }), {

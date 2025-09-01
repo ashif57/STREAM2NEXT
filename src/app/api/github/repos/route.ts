@@ -22,7 +22,7 @@ const clientApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig
 const clientAuth = getClientAuth(clientApp);
 
 async function getGitHubAccessToken(): Promise<string | null> {
-  const customToken = cookies().get('customToken')?.value;
+  const customToken = (await cookies()).get('customToken')?.value;
   if (!customToken) {
     return null;
   }
