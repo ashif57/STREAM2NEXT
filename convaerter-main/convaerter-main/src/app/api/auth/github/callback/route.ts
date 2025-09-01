@@ -8,7 +8,8 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 // Explicitly define the callback URL to ensure it's consistent.
-const GITHUB_REDIRECT_URI = (process.env.NEXT_PUBLIC_URL || 'http://localhost:9002') + '/api/auth/github/callback';
+const baseURL = process.env.NEXT_PUBLIC_URL || 'http://localhost:9002';
+const GITHUB_REDIRECT_URI = new URL('/api/auth/github/callback', baseURL).toString();
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
