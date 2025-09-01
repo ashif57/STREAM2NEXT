@@ -7,14 +7,11 @@ import {NextRequest, NextResponse} from 'next/server';
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
-// Explicitly define the callback URL to ensure it's consistent.
-const GITHUB_REDIRECT_URI = 'https://stream-2-next.vercel.app/api/auth/github/callback';
-
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const code = searchParams.get('code');
   const state = searchParams.get('state');
-  const storedState = cookies().get('github_oauth_state')?.value;
+  const storedState = (await cookies()).get('github_oauth_state')?.value;
 
   console.log('GitHub Callback received state:', state);
   console.log('Stored state:', storedState);
@@ -30,6 +27,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const host = req.headers.get('host');
+    const protocol = req.headers.get('x-forwarded-proto') || 'http';
+    const redirect_uri = `${protocol}://${host}/api/auth/github/callback`;
+
     const tokenResponse = await fetch(
       'https://github.com/login/oauth/access_token',
       {
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
           client_secret: GITHUB_CLIENT_SECRET,
           code,
           state,
-          redirect_uri: GITHUB_REDIRECT_URI,
+          redirect_uri: redirect_uri,
         }),
       }
     );
@@ -72,14 +73,14 @@ export async function GET(req: NextRequest) {
       github_access_token: accessToken,
     });
     
-    cookies().set('customToken', customToken, {
+    const response = NextResponse.redirect(new URL('/', req.url));
+    response.cookies.set('customToken', customToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
         maxAge: 60 * 60 * 24, // 1 day
         path: '/',
     });
-    
-    return NextResponse.redirect(new URL('/', req.url));
+    return response;
   } catch (error) {
     console.error('GitHub callback process error:', error);
     return new Response('Authentication failed', {status: 500});
