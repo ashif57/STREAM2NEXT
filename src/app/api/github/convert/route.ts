@@ -106,7 +106,13 @@ export async function POST(req: NextRequest) {
   const octokit = new Octokit({ auth: accessToken });
 
   try {
-    const {repoId, sourceFramework, targetFramework} = await req.json();
+    let repoId, sourceFramework, targetFramework;
+    try {
+      ({repoId, sourceFramework, targetFramework} = await req.json());
+    } catch (jsonError: any) {
+      return NextResponse.json({error: 'Invalid JSON in request body.'}, {status: 400});
+    }
+
     if (!repoId) {
       return NextResponse.json({error: 'Repository ID is required.'}, {status: 400});
     }

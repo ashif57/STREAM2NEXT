@@ -117,7 +117,7 @@ export function StreamNextConverter() {
       const convertResponse = await fetch('/api/github/convert', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ repoId: selectedRepo, targetFramework }),
+          body: JSON.stringify({ repoId: selectedRepo, sourceFramework, targetFramework }),
       });
 
       if (!convertResponse.ok) {
